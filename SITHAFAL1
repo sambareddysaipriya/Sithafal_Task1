@@ -1,0 +1,415 @@
+pip install pymupdfimport fitz  
+
+def extract_text_from_pdf(pdf_path, page_numbers):
+    doc = fitz.open(pdf_path)
+    text = ""
+    for page_num in page_numbers:
+        page = doc.load_page(page_num - 1)  
+        text += page.get_text("text")
+    return text
+pdf_path = "/content/Task1.pdf"
+page_2_text = extract_text_from_pdf(pdf_path, [2])
+page_6_text = extract_text_from_pdf(pdf_path, [6])
+
+import nltk
+nltk.download('punkt')  
+import nltk
+nltk.download('punkt')
+nltk.download('punkt_tab') 
+
+from nltk.tokenize import sent_tokenize
+
+def chunk_text(text):
+    return sent_tokenize(text)
+
+page_2_chunks = chunk_text(page_2_text)
+page_6_chunks = chunk_text(page_6_text)
+pip install sentence-transformers
+
+from sentence_transformers import SentenceTransformer
+
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
+def embed_chunks(chunks):
+    return model.encode(chunks)
+
+page_2_embeddings = embed_chunks(page_2_chunks)
+page_6_embeddings = embed_chunks(page_6_chunks)
+
+import faiss
+import numpy as np
+
+def store_embeddings(embeddings):
+    if embeddings.size == 0: 
+        print("Warning: Embeddings array is empty. Skipping indexing.")
+        return None 
+    index = faiss.IndexFlatL2(embeddings.shape[1])  
+    index.add(np.array(embeddings))  
+    return index
+
+page_2_index = store_embeddings(np.array(page_2_embeddings))
+page_6_index = store_embeddings(np.array(page_6_embeddings))
+
+query = "What is the unemployment rate for Bachelor's degree holders?"
+query_embedding = model.encode([query])
+
+import fitz  
+
+def extract_text_from_pdf(pdf_path, page_numbers):
+    doc = fitz.open(pdf_path)
+    text = ""
+    for page_num in page_numbers:
+        if 0 <= page_num - 1 < doc.page_count:
+            page = doc.load_page(page_num - 1)
+            text += page.get_text("text")
+        else:
+            print(f"Warning: Page {page_num} is out of range for the document.")
+    return text
+
+pdf_path = "/content/Task1.pdf"
+page_2_text = extract_text_from_pdf(pdf_path, [2])
+page_6_text = extract_text_from_pdf(pdf_path, [6])
+
+import nltk
+nltk.download('punkt')
+nltk.download('punkt_tab')
+
+from nltk.tokenize import sent_tokenize
+
+def chunk_text(text):
+    return sent_tokenize(text)
+
+page_2_chunks = chunk_text(page_2_text)
+page_6_chunks = chunk_text(page_6_text)
+
+from sentence_transformers import SentenceTransformer
+
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
+def embed_chunks(chunks):
+    return model.encode(chunks)
+
+page_2_embeddings = embed_chunks(page_2_chunks)
+page_6_embeddings = embed_chunks(page_6_chunks)
+
+import faiss
+import numpy as np
+
+def store_embeddings(embeddings):
+    if embeddings.size == 0: 
+        print("Warning: Embeddings array is empty. Skipping indexing.")
+        return None  
+    index = faiss.IndexFlatL2(embeddings.shape[1])  
+    index.add(np.array(embeddings)) 
+    return index
+
+page_2_index = store_embeddings(np.array(page_2_embeddings))
+page_6_index = store_embeddings(np.array(page_6_embeddings))
+
+query = "What is the unemployment rate for Bachelor's degree holders?"
+query_embedding = model.encode([query])
+
+def search_query(index, query_embedding, k=5):
+    if index is None:
+        print("Warning: Index is None. Skipping search.")
+        return []
+    D, I = index.search(np.array(query_embedding), k)  
+    return I 
+
+relevant_page_0_chunks = search_query(page_2_index, query_embedding)
+relevant_page_1_chunks = search_query(page_6_index, query_embedding)
+
+def compare_data(data_1, data_2):
+    comparison = {
+        "Degree": ["Bachelor's", "Master's"],
+        "Unemployment Rate": [data_1, data_2]
+    }
+    return comparison
+
+try:
+    comparison_result = compare_data(page_2_chunks[relevant_page_0_chunks[0][0]], page_6_chunks[relevant_page_1_chunks[0][0]])
+    print(comparison_result)
+except IndexError:
+    print("Error: Invalid index. The search might not have found relevant chunks or the PDF pages might not contain the expected information.")
+pip install transformers
+
+from transformers import pipeline
+
+generator = pipeline("text-generation", model="EleutherAI/gpt-neo-2.7B")
+
+def generate_response(query, context):
+    prompt = f"Answer the following question based on the context: {query}\nContext: {context}"
+    response = generator(prompt, max_length=200)
+    return response[0]["generated_text"]
+
+if relevant_page_0_chunks and relevant_page_0_chunks[0] and all(0 <= i < len(page_2_chunks) for i in relevant_page_0_chunks[0]):
+    context = " ".join([page_2_chunks[i] for i in relevant_page_0_chunks[0]])  
+    response = generate_response(query, context)
+    print(response)
+
+   import faiss
+import numpy as np
+
+def store_embeddings(embeddings):
+    if embeddings.size == 0:
+        print("Warning: Embeddings array is empty. Skipping indexing.")
+        return None
+
+    index = faiss.IndexFlatL2(embeddings.shape[1]) 
+    index.add(np.array(embeddings)) 
+    return index
+
+page_2_index = store_embeddings(np.array(page_2_embeddings)) if page_2_embeddings.size else None
+page_6_index = store_embeddings(np.array(page_6_embeddings))
+
+print("FAISS Index for Page 2:", page_2_index.ntotal if page_2_index else "None")
+print("FAISS Index for Page 6:", page_6_index.ntotal if page_6_index else "None")
+
+from transformers import pipeline
+
+generator = pipeline("text-generation", model="EleutherAI/gpt-neo-2.7B")
+
+def generate_response(query, context):
+    prompt = f"Answer the following question based on the context: {query}\nContext: {context}"
+    response = generator(prompt, max_new_tokens=200)
+    return response[0]['generated_text']
+
+
+def search_query(index, query_embedding, k=5):
+    if index is None:
+        print("Warning: Index is None. Skipping search.")
+        return []  
+    D, I = index.search(np.array(query_embedding), k)
+    return I  
+
+query = "What is the unemployment rate for Bachelor's degree holders?"
+
+query_embedding = model.encode([query])
+
+relevant_page_2_chunks = search_query(page_2_index, query_embedding) if page_2_index else []
+relevant_page_6_chunks = search_query(page_6_index, query_embedding) if page_6_index else []
+
+context_page_2 = " ".join([page_2_chunks[i] for i in relevant_page_2_chunks[0]]) if relevant_page_2_chunks else ""
+context_page_6 = " ".join([page_6_chunks[i] for i in relevant_page_6_chunks[0]]) if relevant_page_6_chunks.size else ""
+
+response_page_2 = generate_response(query, context_page_2) if context_page_2 else "No relevant information found on Page 2."
+response_page_6 = generate_response(query, context_page_6) if context_page_6 else "No relevant information found on Page 6."
+
+print("Response based on Page 2:", response_page_2)
+print("Response based on Page 6:", response_page_6)
+
+!pip install pymupdf 
+import fitz 
+
+
+def extract_text_from_pdf(pdf_path, page_numbers):
+    doc = fitz.open(pdf_path)
+    text = ""
+    for page_num in page_numbers:
+        if 0 <= page_num - 1 < doc.page_count:
+            page = doc.load_page(page_num - 1)
+            text += page.get_text("text")
+        else:
+            print(f"Warning: Page {page_num} is out of range for the document.")
+    return text
+
+pdf_path = "/content/Task1.pdf"  
+page_2_text = extract_text_from_pdf(pdf_path, [2])
+page_6_text = extract_text_from_pdf(pdf_path, [6])
+
+print("Page 2 Text:")
+print(page_2_text)
+print("\nPage 6 Text:")
+print(page_6_text)
+!pip install pymupdf
+!pip install nltk
+!pip install sentence-transformers
+!pip install faiss-cpu
+!pip install transformers
+
+
+import fitz
+import nltk
+
+nltk.download('punkt')
+nltk.download('punkt_tab')
+
+from nltk.tokenize import sent_tokenize
+
+def extract_text_from_pdf(pdf_path, page_numbers):
+    doc = fitz.open(pdf_path)
+    text = ""
+    for page_num in page_numbers:
+        if 0 <= page_num - 1 < doc.page_count:
+            page = doc.load_page(page_num - 1)
+            text += page.get_text("text")
+        else:
+            print(f"Warning: Page {page_num} is out of range for the document.")
+    return text
+
+pdf_path = "/content/Task1.pdf"  
+page_2_text = extract_text_from_pdf(pdf_path, [2])
+page_6_text = extract_text_from_pdf(pdf_path, [6])
+
+def chunk_text(text):
+    return sent_tokenize(text)
+
+page_2_chunks = chunk_text(page_2_text)
+page_6_chunks = chunk_text(page_6_text)
+
+
+print("Page 2 Chunks:")
+print(page_2_chunks[:5])  
+print("\nPage 6 Chunks:")
+print(page_6_chunks[:5])
+
+
+!pip install pymupdf
+!pip install nltk
+!pip install sentence-transformers
+!pip install faiss-cpu
+!pip install transformers
+
+import fitz
+import nltk
+from nltk.tokenize import sent_tokenize
+from sentence_transformers import SentenceTransformer
+import faiss
+import numpy as np
+
+
+def extract_text_from_pdf(pdf_path, page_numbers):
+    doc = fitz.open(pdf_path)
+    text = ""
+    for page_num in page_numbers:
+        if 0 <= page_num - 1 < doc.page_count:
+            page = doc.load_page(page_num - 1)
+            text += page.get_text("text")
+        else:
+            print(f"Warning: Page {page_num} is out of range for the document.")
+    return text
+
+def chunk_text(text):
+    return sent_tokenize(text)
+
+def embed_chunks(chunks):
+    return model.encode(chunks)
+
+def store_embeddings(embeddings):
+    if embeddings.size == 0:
+        print("Warning: Embeddings array is empty. Skipping indexing.")
+        return None
+    index = faiss.IndexFlatL2(embeddings.shape[1])
+    index.add(np.array(embeddings))
+    return index
+
+
+nltk.download('punkt')
+nltk.download('punkt_tab')
+
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
+pdf_path = "/content/Task1.pdf"
+page_2_text = extract_text_from_pdf(pdf_path, [2])
+page_6_text = extract_text_from_pdf(pdf_path, [6])
+
+page_2_chunks = chunk_text(page_2_text)
+page_6_chunks = chunk_text(page_6_text)
+
+page_2_embeddings = embed_chunks(page_2_chunks) 
+page_6_embeddings = embed_chunks(page_6_chunks)
+
+print("Page 2 Embeddings Shape:", len(page_2_embeddings))
+print("Page 6 Embeddings Shape:", len(page_6_embeddings))
+
+!pip install pymupdf
+!pip install nltk
+!pip install sentence-transformers
+!pip install faiss-cpu
+!pip install transformers
+
+import fitz
+import nltk
+from nltk.tokenize import sent_tokenize
+from sentence_transformers import SentenceTransformer
+import faiss
+import numpy as np
+
+nltk.download('punkt')
+nltk.download('punkt_tab')
+
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
+pdf_path = "/content/Task1.pdf"
+page_2_text = extract_text_from_pdf(pdf_path, [2])
+
+!pip install pymupdf
+!pip install nltk
+!pip install sentence-transformers
+!pip install faiss-cpu
+!pip install transformers
+
+import fitz
+import nltk
+from nltk.tokenize import sent_tokenize
+from sentence_transformers import SentenceTransformer
+import faiss
+import numpy as np
+from transformers import pipeline
+
+def extract_text_from_pdf(pdf_path, page_numbers):
+    doc = fitz.open(pdf_path)
+    text = ""
+    for page_num in page_numbers:
+        if 0 <= page_num - 1 < doc.page_count:
+            page = doc.load_page(page_num - 1)
+            text += page.get_text("text")
+        else:
+            print(f"Warning: Page {page_num} is out of range for the document.")
+    return text
+
+def chunk_text(text):
+    return sent_tokenize(text)
+
+def embed_chunks(chunks):
+    return model.encode(chunks)
+
+def store_embeddings(embeddings):
+    if embeddings.size == 0:
+        print("Warning: Embeddings array is empty. Skipping indexing.")
+        return None
+    index = faiss.IndexFlatL2(embeddings.shape[1])
+    index.add(np.array(embeddings))
+    return index
+
+nltk.download('punkt')
+nltk.download('punkt_tab')
+
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
+pdf_path = "/content/Task1.pdf"
+page_2_text = extract_text_from_pdf(pdf_path, [2])
+page_6_text = extract_text_from_pdf(pdf_path, [6]) 
+
+page_2_chunks = chunk_text(page_2_text)
+page_6_chunks = chunk_text(page_6_text) 
+
+page_2_embeddings = embed_chunks(page_2_chunks)
+page_6_embeddings = embed_chunks(page_6_chunks)
+
+page_2_index = store_embeddings(np.array(page_2_embeddings))
+page_6_index = store_embeddings(np.array(page_6_embeddings))
+generator = pipeline("text-generation", model="EleutherAI/gpt-neo-2.7B")
+
+def generate_response(query, context):
+    prompt = f"Answer the following question based on the context: {query}\nContext: {context}"
+    response = generator(prompt, max_new_tokens=200)
+    return response[0]['generated_text']
+
+def search_query(index, query_embedding, k=5):
+    if index is None:
+        print("Warning: Index is None. Skipping search.")
+        return [] 
+    D, I = index.search(np.array(query_embedding), k)  
+    return I  
+
